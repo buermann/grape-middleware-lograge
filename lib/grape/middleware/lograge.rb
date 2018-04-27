@@ -21,11 +21,13 @@ class Grape::Middleware::Lograge < Grape::Middleware::Globals
   def before
     super
 
-    @db_runtime = 0
+    if false
+      @db_runtime = 0
 
-    @db_subscription = ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, ending, transaction_id, payload|
-      @db_runtime += 1000.0 * (ending - start) if ending && start
-    end if defined?(ActiveRecord)
+      @db_subscription = ActiveSupport::Notifications.subscribe('sql.active_record') do |name, start, ending, transaction_id, payload|
+        @db_runtime += 1000.0 * (ending - start) if ending && start
+      end if defined?(ActiveRecord)
+    end
 
     ActiveSupport::Notifications.instrument("start_processing.grape", raw_payload)
   end
@@ -65,7 +67,7 @@ class Grape::Middleware::Lograge < Grape::Middleware::Globals
     payload[:status]     = status
     payload[:format]     = env['api.format']
     payload[:version]    = env['api.version']
-    payload[:db_runtime] = @db_runtime
+    #payload[:db_runtime] = @db_runtime
   end
 
   def after_exception(payload, e)
