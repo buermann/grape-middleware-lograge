@@ -91,7 +91,6 @@ class Grape::Middleware::Lograge < Grape::Middleware::Globals
 
   def parameters
     request_params = env[Grape::Env::GRAPE_REQUEST].params
-    request_params.merge!(env['action_dispatch.request.request_parameters'.freeze] || {}) # for Rails
 
     if @options[:filter]
       @options[:filter].filter(request_params)
