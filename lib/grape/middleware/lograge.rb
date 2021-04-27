@@ -57,6 +57,17 @@ class Grape::Middleware::Lograge < Grape::Middleware::Globals
         after(payload, response.status)
       end
 
+      # Parse request parameters from the PUT/POST body and include them in the params payload
+      body   = env[Grape::Env::API_REQUEST_INPUT]
+      if body.present?
+        fmt    = request.media_type ? mime_types[request.media_type] : options[:default_format]
+        parser = Grape::Parser.parser_for fmt
+        if content_type_for(fmt)
+          body_params = parser.call(body, env)
+          payload[:params].merge!(body_params)
+        end
+      end
+
       @app_response
     end
   end
@@ -90,8 +101,9 @@ class Grape::Middleware::Lograge < Grape::Middleware::Globals
   end
 
   def parameters
-    request_params = env[Grape::Env::GRAPE_REQUEST_PARAMS].to_hash
+    request_params = env[Grape::Env::GRAPE_REQUEST].params
     request_params.merge!(env['action_dispatch.request.request_parameters'.freeze] || {}) # for Rails
+
     if @options[:filter]
       @options[:filter].filter(request_params)
     else
@@ -111,6 +123,10 @@ class Grape::Middleware::Lograge < Grape::Middleware::Globals
       request_id: env['action_dispatch.request_id'],
       remote_ip:  env['action_dispatch.remote_ip'].to_s
     }
+  end
+
+  def request
+    env[Grape::Env::GRAPE_REQUEST]
   end
 
   def endpoint
